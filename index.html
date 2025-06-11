@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>وثيقة تنفيذ اختبار الوحدات</title>
+    <style>
+        /* Basic styling for better readability */
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+            background-color: #f8f8f8;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #0056b3;
+            border-bottom: 2px solid #0056b3;
+            padding-bottom: 5px;
+            margin-top: 20px;
+        }
+        h1 {
+            border-bottom-color: #003a70;
+        }
+        pre {
+            background-color: #eee;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto; /* Add horizontal scroll for wide code */
+        }
+        code {
+            font-family: 'Consolas', 'Monaco', 'Andale Mono', 'Ubuntu Mono', monospace;
+        }
+        pre code {
+             /* Ensure code inside pre flows correctly, important for RTL */
+             direction: ltr;
+             text-align: left;
+             display: block; /* Ensure it takes up block space */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right; /* Align text to the right for RTL table */
+        }
+        th {
+            background-color: #0056b3;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        ul, ol {
+            margin-bottom: 15px;
+        }
+        /* Specific styling for command line code */
+        pre code.language-bash {
+             background-color: #333;
+             color: #fff;
+        }
+    </style>
+</head>
+<body dir="rtl">
+
+    <h1>وثيقة تنفيذ اختبار الوحدات</h1>
+
+    <h2>مقدمة</h2>
+    <p>
+        هذه الوثيقة توثق خطوات تنفيذ المهمة المطلوبة في جلسة اختبار الوحدات، والتي تتضمن إضافة وظيفتي <code>Divide</code> و <code>IsEven</code> إلى كلاس <code>Calculator</code> في مشروع <code>MathLibrary</code>، مع كتابة اختبارات وحدة باستخدام إطار عمل MSTest وفق مبدأ AAA (<code>Arrange-Act-Assert</code>). تم التنفيذ باستخدام Visual Studio Code على نظام Windows.
+    </p>
+
+    <h2>خطوات التنفيذ</h2>
+
+    <h3>1. إعداد بيئة العمل</h3>
+
+    <p><strong>التثبيتات المسبقة:</strong></p>
+    <ul>
+        <li>تم تثبيت <code>.NET SDK</code> (الإصدار 9.0) وتم التحقق منه باستخدام الأمر:
+            <pre><code class="language-bash">dotnet --version</code></pre>
+        </li>
+        <li>تم تثبيت <code>Visual Studio Code</code> مع امتداد <code>C#</code>.</li>
+    </ul>
+
+    <p><strong>إنشاء المشاريع وربطها:</strong></p>
+    <p>تم إنشاء البنية الأساسية للمشروع والحل كالتالي:</p>
+    <ol>
+        <li>إنشاء حل جديد:
+            <pre><code class="language-bash">dotnet new sln -n UnitTestingDemo</code></pre>
+        </li>
+        <li>إنشاء مكتبة كلاسات (المشروع الذي يحتوي على الكود المراد اختباره):
+            <pre><code class="language-bash">dotnet new classlib -n MathLibrary</code></pre>
+        </li>
+        <li>إنشاء مشروع اختبار باستخدام إطار عمل <code>MSTest</code>:
+            <pre><code class="language-bash">dotnet new mstest -n MathLibrary.Tests</code></pre>
+        </li>
+        <li>ربط المشروعين (المكتبة والاختبارات) بالحل:
+            <pre><code class="language-bash">dotnet sln UnitTestingDemo.sln add MathLibrary/MathLibrary.csproj MathLibrary.Tests/MathLibrary.Tests.csproj</code></pre>
+        </li>
+        <li>إضافة مرجع من مشروع الاختبارات إلى مشروع المكتبة للسماح للاختبارات بالوصول إلى الكود:
+            <pre><code class="language-bash">dotnet add MathLibrary.Tests/MathLibrary.Tests.csproj reference MathLibrary/MathLibrary.csproj</code></pre>
+        </li>
+    </ol>
+
+    <h3>2. إعداد كلاس <code>Calculator</code></h3>
+
+    <p>تم تعديل ملف الكلاس الذي سيحتوي على الوظائف المراد اختبارها.</p>
+
+    <p><strong>الملف:</strong> <code>MathLibrary/Calculator.cs</code>.</p>
+
+    <p><strong>الوظائف المضافة/المعدلة:</strong></p>
+    <ul>
+        <li><code>Multiply</code>: وظيفة موجودة لضرب عددين.</li>
+        <li><code>Divide</code>: وظيفة جديدة لقسمة عددين مع معالجة حالة القسمة على الصفر.</li>
+        <li><code>IsEven</code>: وظيفة جديدة للتحقق مما إذا كان العدد زوجيًا.</li>
+    </ul>
+
+    <p><strong>محتوى الكود:</strong></p>
+    <pre><code class="language-csharp">namespace MathLibrary
+{
+    public static class Calculator
+    {
+        /// <summary>
+        /// يقوم بضرب عددين صحيحين.
+        /// </summary>
+        /// <param name="a">العدد الأول.</param>
+        /// <param name="b">العدد الثاني.</param>
+        /// <returns>ناتج ضرب a و b.</returns>
+        public static int Multiply(int a, int b)
+        {
+            return a * b;
+        }
+
+        /// <summary>
+        /// يقوم بقسمة عدد صحيح على آخر.
+        /// يعيد 0 إذا كان المقسوم عليه يساوي صفر لتجنب الأخطاء.
+        /// </summary>
+        /// <param name="a">المقسوم.</param>
+        /// <param name="b">المقسوم عليه.</param>
+        /// <returns>ناتج قسمة a على b، أو 0 إذا كان b = 0.</returns>
+        public static int Divide(int a, int b)
+        {
+            if (b == 0)
+            {
+                return 0; // أو يمكن رمي استثناء ArgumentException حسب متطلبات التصميم
+            }
+            return a / b;
+        }
+
+        /// <summary>
+        /// يتحقق مما إذا كان العدد الصحيح زوجيًا.
+        /// </summary>
+        /// <param name="a">العدد المراد التحقق منه.</param>
+        /// <returns>true إذا كان a زوجيًا، و false إذا كان فرديًا.</returns>
+        public static bool IsEven(int a)
+        {
+            return a % 2 == 0;
+        }
+    }
+}</code></pre>
+
+    <p>تم حفظ الملف بعد التعديل.</p>
+
+    <h3>3. كتابة اختبارات الوحدات</h3>
+
+    <p>تم إضافة ملف اختبار جديد في مشروع الاختبارات لكلاس <code>Calculator</code>.</p>
+
+    <p><strong>الملف:</strong> <code>MathLibrary.Tests/CalculatorTests.cs</code>.</p>
+
+    <p><strong>الأكواد:</strong></p>
+    <p>تم إضافة دوال اختبار لكل وظيفة في كلاس <code>Calculator</code>، مع اتباع مبدأ <code>AAA</code> (Arrange-Act-Assert) لزيادة وضوح كل اختبار.</p>
+
+    <p><strong>محتوى الكود:</strong></p>
+    <pre><code class="language-csharp">using Microsoft.VisualStudio.TestTools.UnitTesting;
+using MathLibrary;
+
+namespace MathLibrary.Tests
+{
+    [TestClass]
+    public class CalculatorTests
+    {
+        // اختبارات وظيفة Multiply
+
+        [TestMethod]
+        public void Multiply_TwoPositiveNumbers_ReturnsCorrectResult()
+        {
+            // Arrange
+            int a = 2;
+            int b = 3;
+            int expected = 6;
+
+            // Act
+            int result = Calculator.Multiply(a, b);
+
+            // Assert
+            Assert.AreEqual(expected, result, "ضرب عددين موجبين يجب أن يعطي نتيجة موجبة صحيحة.");
+        }
+
+        [TestMethod]
+        public void Multiply_NumberWithZero_ReturnsZero()
+        {
+            // Arrange
+            int a = 0;
+            int b = 5;
+            int expected = 0;
+
+            // Act
+            int result = Calculator.Multiply(a, b);
+
+            // Assert
+            Assert.AreEqual(expected, result, "ضرب أي عدد بصفر يجب أن يعطي صفر.");
+        }
+
+        [TestMethod]
+        public void Multiply_NegativeAndPositiveNumber_ReturnsNegative()
+        {
+            // Arrange
+            int a = -2;
+            int b = 3;
+            int expected = -6;
+
+            // Act
+            int result = Calculator.Multiply(a, b);
+
+            // Assert
+            Assert.AreEqual(expected, result, "ضرب عدد سالب بعدد موجب يجب أن يعطي نتيجة سالبة.");
+        }
+
+        [TestMethod]
+        public void Multiply_TwoNegativeNumbers_ReturnsPositive()
+        {
+            // Arrange
+            int a = -2;
+            int b = -3;
+            int expected = 6;
+
+            // Act
+            int result = Calculator.Multiply(a, b);
+
+            // Assert
+            Assert.AreEqual(expected, result, "ضرب عددين سالبين يجب أن يعطي نتيجة موجبة.");
+        }
+
+        // اختبارات وظيفة Divide
+
+        [TestMethod]
+        public void Divide_TwoPositiveNumbers_ReturnsCorrectResult()
+        {
+            // Arrange
+            int a = 10;
+            int b = 2;
+            int expected = 5;
+
+            // Act
+            int result = Calculator.Divide(a, b);
+
+            // Assert
+            Assert.AreEqual(expected, result, "قسمة عدد موجب على عدد موجب يجب أن تعطي نتيجة موجبة.");
+        }
+
+        [TestMethod]
+        public void Divide_DivisionByZero_ReturnsZero()
+        {
+            // Arrange
+            int a = 10;
+            int b = 0;
+            int expected = 0; // حسب تعريف الوظيفة، تعيد 0 في حالة القسمة على صفر.
+
+            // Act
+            int result = Calculator.Divide(a, b);
+
+            // Assert
+            Assert.AreEqual(expected, result, "القسمة على صفر يجب أن تعيد صفر حسب تعريف الوظيفة.");
+        }
+
+        [TestMethod]
+        public void Divide_NegativeAndPositiveNumber_ReturnsNegative()
+        {
+            // Arrange
+            int a = -10;
+            int b = 2;
+            int expected = -5;
+
+            // Act
+            int result = Calculator.Divide(a, b);
+
+            // Assert
+            Assert.AreEqual(expected, result, "قسمة عدد سالب على عدد موجب يجب أن تعطي نتيجة سالبة.");
+        }
+
+        // اختبارات وظيفة IsEven
+
+        [TestMethod]
+        public void IsEven_EvenNumber_ReturnsTrue()
+        {
+            // Arrange
+            int a = 4;
+            bool expected = true;
+
+            // Act
+            bool result = Calculator.IsEven(a);
+
+            // Assert
+            Assert.AreEqual(expected, result, "العدد الزوجي يجب أن يعيد true.");
+        }
+
+        [TestMethod]
+        public void IsEven_OddNumber_ReturnsFalse()
+        {
+            // Arrange
+            int a = 3;
+            bool expected = false;
+
+            // Act
+            bool result = Calculator.IsEven(a);
+
+            // Assert
+            Assert.AreEqual(expected, result, "العدد الفردي يجب أن يعيد false.");
+        }
+
+        [TestMethod]
+        public void IsEven_Zero_ReturnsTrue()
+        {
+            // Arrange
+            int a = 0;
+            bool expected = true;
+
+            // Act
+            bool result = Calculator.IsEven(a);
+
+            // Assert
+            Assert.AreEqual(expected, result, "الصفر يعتبر عددًا زوجيًا ويجب أن يعيد true.");
+        }
+    }
+}</code></pre>
+
+    <p>تم حفظ الملف بعد التعديل.</p>
+
+    <h3>4. تجميع وتشغيل الاختبارات</h3>
+
+    <p>تم استخدام سطر الأوامر لتجميع الحل وتشغيل الاختبارات.</p>
+
+    <p><strong>التجميع:</strong> تم تشغيل الأمر التالي للتأكد من خلو المشروع من الأخطاء وتجهيزه للاختبار:</p>
+    <pre><code class="language-bash">dotnet build UnitTestingDemo.sln</code></pre>
+
+    <p><strong>تشغيل الاختبارات:</strong> تم تشغيل الأمر التالي لتنفيذ جميع اختبارات الوحدات في الحل:</p>
+    <pre><code class="language-bash">dotnet test UnitTestingDemo.sln</code></pre>
+    <p>أظهرت النتائج نجاح 10 اختبارات (4 لـ <code>Multiply</code>، 3 لـ <code>Divide</code>، 3 لـ <code>IsEven</code>) دون أي فشل، مما يؤكد صحة عمل الوظائف المضافة واختباراتها.</p>
+
+    <h3>5. رفع الكود والوثيقة إلى GitHub</h3>
+
+    <p>تم استخدام <code>Git</code> و <code>GitHub</code> لإدارة إصدارات الكود ورفع المشروع المكتمل والوثيقة.</p>
+
+    <p><strong>إنشاء المستودع:</strong></p>
+    <ul>
+        <li>تم إنشاء مستودع جديد على <code>GitHub</code> باسم <code>UnitTestingAssignment</code>.</li>
+    </ul>
+
+    <p><strong>رفع الكود:</strong></p>
+    <p>في الطرفية ضمن مجلد الحل (<code>UnitTestingDemo</code>)، تم تنفيذ الأوامر التالية لتهيئة مستودع محلي، إضافة الملفات، تسجيل التغييرات، ربط المستودع المحلي بالمستودع البعيد على <code>GitHub</code>، وأخيراً رفع الكود:</p>
+    <pre><code class="language-bash">git init
+git add .
+git commit -m "إضافة كلاس Calculator مع الوظائف واختباراتها الأساسية"
+git remote add origin "https://github.com/Abdulrahman-haytham/UnitTestingAssignment.git"
+git push -u origin main</code></pre>
+   
+
+    <h2>جدول حالات الاختبار</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>الوظيفة</th>
+                <th>اسم الاختبار</th>
+                <th>المدخلات</th>
+                <th>النتيجة المتوقعة</th>
+                <th>الوصف</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>Multiply</code></td>
+                <td><code>Multiply_TwoPositiveNumbers_ReturnsCorrectResult</code></td>
+                <td><code>a=2, b=3</code></td>
+                <td><code>6</code></td>
+                <td>ضرب عددين إيجابيين.</td>
+            </tr>
+            <tr>
+                <td><code>Multiply</code></td>
+                <td><code>Multiply_NumberWithZero_ReturnsZero</code></td>
+                <td><code>a=0, b=5</code></td>
+                <td><code>0</code></td>
+                <td>ضرب عدد بصفر.</td>
+            </tr>
+            <tr>
+                <td><code>Multiply</code></td>
+                <td><code>Multiply_NegativeAndPositiveNumber_ReturnsNegative</code></td>
+                <td><code>a=-2, b=3</code></td>
+                <td><code>-6</code></td>
+                <td>ضرب عدد سالب بعدد موجب.</td>
+            </tr>
+            <tr>
+                <td><code>Multiply</code></td>
+                <td><code>Multiply_TwoNegativeNumbers_ReturnsPositive</code></td>
+                <td><code>a=-2, b=-3</code></td>
+                <td><code>6</code></td>
+                <td>ضرب عددين سالبين.</td>
+            </tr>
+            <tr>
+                <td><code>Divide</code></td>
+                <td><code>Divide_TwoPositiveNumbers_ReturnsCorrectResult</code></td>
+                <td><code>a=10, b=2</code></td>
+                <td><code>5</code></td>
+                <td>قسمة عدد موجب على عدد موجب.</td>
+            </tr>
+            <tr>
+                <td><code>Divide</code></td>
+                <td><code>Divide_DivisionByZero_ReturnsZero</code></td>
+                <td><code>a=10, b=0</code></td>
+                <td><code>0</code></td>
+                <td>القسمة على صفر (حسب تعريف الوظيفة).</td>
+            </tr>
+            <tr>
+                <td><code>Divide</code></td>
+                <td><code>Divide_NegativeAndPositiveNumber_ReturnsNegative</code></td>
+                <td><code>a=-10, b=2</code></td>
+                <td><code>-5</code></td>
+                <td>قسمة عدد سالب على عدد موجب.</td>
+            </tr>
+            <tr>
+                <td><code>IsEven</code></td>
+                <td><code>IsEven_EvenNumber_ReturnsTrue</code></td>
+                <td><code>a=4</code></td>
+                <td><code>true</code></td>
+                <td>التحقق من عدد زوجي موجب.</td>
+            </tr>
+            <tr>
+                <td><code>IsEven</code></td>
+                <td><code>IsEven_OddNumber_ReturnsFalse</code></td>
+                <td><code>a=3</code></td>
+                <td><code>false</code></td>
+                <td>التحقق من عدد فردي موجب.</td>
+            </tr>
+            <tr>
+                <td><code>IsEven</code></td>
+                <td><code>IsEven_Zero_ReturnsTrue</code></td>
+                <td><code>a=0</code></td>
+                <td><code>true</code></td>
+                <td>التحقق من الصفر (يعتبر زوجيًا).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>الخلاصة</h2>
+
+    <ul>
+        <li>تم بنجاح إضافة الوظائف <code>Divide</code> و <code>IsEven</code> إلى كلاس <code>Calculator</code> في مشروع <code>MathLibrary</code>.</li>
+        <li>تم كتابة 10 اختبارات وحدات شاملة (4 لـ Multiply، 3 لـ Divide، و 3 لـ IsEven) باستخدام إطار عمل <code>MSTest</code> ومبدأ <code>AAA</code>.</li>
+        <li>تم التحقق من نجاح جميع الاختبارات باستخدام الأمر <code>dotnet test</code>.</li>
+        <li>تم رفع الكود والوثيقة إلى مستودع <code>GitHub</code> المخصص للمهمة.</li>
+    </ul>
+
+</body>
+</html>
